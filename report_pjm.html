@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --lg-red:#E2001A;--lg-red-l:#FFF0F1;--lg-red-t:#FECDD1;
+  --lg-dark:#1A1A2E;--lg-mid:#2D3561;
+  --bg:#F5F6F8;--bg2:#fff;--bg3:#F9FAFB;--bg4:#EEF0F4;
+  --border:#E2E5ED;--border2:#D0D4DF;
+  --text:#0F1117;--text2:#2D3561;--text3:#5A607A;--text4:#9298B0;
+  --green:#0E8A4A;--green-l:#EDFAF4;--green-t:#A7EDD0;
+  --yellow:#D48800;--yellow-l:#FFF8E6;--yellow-t:#FFE599;
+  --red:#C9202E;--red-l:#FFF0F1;--red-t:#FECDD1;
+  --blue:#1255CC;--blue-l:#EBF1FF;--blue-t:#BFCFFF;
+  --purple:#6B29C3;--purple-l:#F3EEFF;--purple-t:#D7BEFF;
+  --orange:#C45C00;--orange-l:#FFF3E8;
+  --shadow:0 1px 4px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
+  --radius:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;font-size:12px;background:var(--bg);color:var(--text)}
+
+.header{background:var(--bg2);border-bottom:3px solid var(--lg-red);padding:10px 16px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow)}
+.lg-mark{width:30px;height:20px;background:var(--lg-red);border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.lg-mark span{color:#fff;font-size:8px;font-weight:900;letter-spacing:.03em}
+.h-title{font-size:13px;font-weight:700;color:var(--lg-dark);letter-spacing:-.01em}
+.h-sub{font-size:10px;color:var(--text3);margin-top:1px}
+.h-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.badge{font-size:10px;padding:3px 9px;border-radius:4px;font-weight:600}
+.badge-pv{background:var(--lg-mid);color:#fff}
+.badge-live{background:var(--green-l);color:var(--green);border:1px solid var(--green-t);display:flex;align-items:center;gap:4px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.sync{font-size:10px;color:var(--text4)}
+
+.persona-bar{background:linear-gradient(135deg,var(--lg-dark) 0%,var(--lg-mid) 100%);padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+.pb-left .pb-name{font-size:15px;font-weight:800;color:#fff;letter-spacing:-.02em}
+.pb-left .pb-role{font-size:10px;color:rgba(255,255,255,.65);margin-top:2px}
+.pb-right{display:flex;gap:6px;flex-wrap:wrap}
+.pb-tag{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:4px;padding:3px 9px;font-size:10px;color:rgba(255,255,255,.85);font-weight:500}
+
+.main{padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+
+/* KPI */
+.kpi-row{display:grid;gap:8px}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow);border-left:4px solid transparent;display:flex;flex-direction:column;gap:2px}
+.kpi.k-r{border-left-color:var(--lg-red)}.kpi.k-b{border-left-color:var(--blue)}
+.kpi.k-g{border-left-color:var(--green)}.kpi.k-y{border-left-color:var(--yellow)}
+.kpi.k-p{border-left-color:var(--purple)}.kpi.k-d{border-left-color:var(--lg-dark)}
+.kpi-lbl{font-size:10px;color:var(--text3);font-weight:500}
+.kpi-val{font-size:24px;font-weight:800;color:var(--text);letter-spacing:-.03em;line-height:1.1}
+.kpi-sub{font-size:10px;color:var(--text4)}
+.kpi-delta{font-size:10px;font-weight:600;margin-top:2px;display:flex;align-items:center;gap:3px}
+.d-up{color:var(--green)}.d-dn{color:var(--red)}.d-flat{color:var(--yellow)}
+
+/* CARD */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow)}
+.card-title{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.ct{width:3px;border-radius:2px;flex-shrink:0}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:11px}
+.tbl th{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;padding:5px 8px;border-bottom:2px solid var(--border);background:var(--bg3);text-align:left}
+.tbl td{padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--blue-l)}
+.pname{font-weight:600;font-size:11px}
+.pmeta{font-size:9px;color:var(--text4);margin-top:1px}
+
+/* BADGES */
+.b{display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px}
+.b-oc{background:var(--blue-l);color:var(--blue);border:1px solid var(--blue-t)}
+.b-noc{background:var(--green-l);color:var(--green);border:1px solid var(--green-t)}
+.b-a{background:var(--red-l);color:var(--red);border:1px solid var(--red-t)}
+.b-b{background:var(--yellow-l);color:var(--yellow);border:1px solid var(--yellow-t)}
+.b-ok{background:var(--green-l);color:var(--green);border:1px solid var(--green-t)}
+.b-warn{background:var(--yellow-l);color:var(--yellow);border:1px solid var(--yellow-t)}
+.b-bad{background:var(--red-l);color:var(--red);border:1px solid var(--red-t)}
+.b-plan{background:var(--blue-l);color:var(--blue);border:1px solid var(--blue-t)}
+
+/* PBAR */
+.pb-w{display:inline-block;width:56px;height:5px;background:var(--border);border-radius:3px;vertical-align:middle}
+.pb-f{height:100%;border-radius:3px}
+
+/* LAYOUT */
+.row{display:grid;gap:10px}
+.r5{grid-template-columns:repeat(5,1fr)}
+.r3-2{grid-template-columns:3fr 2fr}
+.r2{grid-template-columns:1fr 1fr}
+.r3{grid-template-columns:1fr 1fr 1fr}
+.r2-1{grid-template-columns:2fr 1fr}
+.r2-1-1{grid-template-columns:2fr 1fr 1fr}
+.ch-sm{height:130px}.ch-md{height:160px}.ch-lg{height:200px}
+
+/* ALERT */
+.alert{border-radius:6px;padding:7px 10px;font-size:10px;margin-top:6px;line-height:1.6}
+.al-r{background:var(--red-l);border:1px solid var(--red-t);color:var(--red)}
+.al-y{background:var(--yellow-l);border:1px solid var(--yellow-t);color:var(--yellow)}
+.al-g{background:var(--green-l);border:1px solid var(--green-t);color:var(--green)}
+.al-b{background:var(--blue-l);border:1px solid var(--blue-t);color:var(--blue)}
+
+/* MILESTONE */
+.ms-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)}
+.ms-item:last-child{border-bottom:none}
+.ms-date{font-size:10px;font-weight:600;color:var(--text3);width:52px;flex-shrink:0}
+.ms-info{flex:1}
+.ms-name{font-size:11px;font-weight:500;color:var(--text)}
+.ms-proj{font-size:9px;color:var(--text4);margin-top:1px}
+
+/* RISK */
+.risk-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)}
+.risk-item:last-child{border-bottom:none}
+.rl{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;white-space:nowrap;flex-shrink:0;margin-top:1px}
+.rl-h{background:var(--red-l);color:var(--red)}
+.rl-m{background:var(--yellow-l);color:var(--yellow)}
+.rl-l{background:var(--green-l);color:var(--green)}
+.rname{font-size:11px;font-weight:500;color:var(--text)}
+.rproj{font-size:9px;color:var(--text3);margin-top:1px}
+.rown{font-size:9px;color:var(--text4);white-space:nowrap;flex-shrink:0;text-align:right}
+
+/* MINI STAT */
+.mstat{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px}
+.mstat:last-child{border-bottom:none}
+.msk{color:var(--text3)}.msv{font-weight:700;color:var(--text)}
+
+/* CHKLIST */
+.chk{display:flex;align-items:flex-start;gap:7px;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px}
+.chk:last-child{border-bottom:none}
+.chk-i{font-size:12px;flex-shrink:0;margin-top:1px}
+.chk-t{flex:1;color:var(--text2);line-height:1.5}
+.chk-d{font-size:9px;color:var(--text4);white-space:nowrap;flex-shrink:0}
+
+/* SCENARIO */
+.sc-row{display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px}
+.sc-row:last-child{border-bottom:none}
+.sc-ic{width:16px;text-align:center;flex-shrink:0}
+.sc-name{flex:1;font-weight:500}
+.sc-val{width:60px;text-align:right;font-weight:700;color:var(--text2)}
+.sc-roi{width:60px;text-align:right;font-size:10px;color:var(--text3)}
+.sc-co2{width:50px;text-align:right;font-size:10px;color:var(--green)}
+
+/* GANTT simple */
+.gantt-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px}
+.gantt-row:last-child{border-bottom:none}
+.gantt-lbl{width:120px;flex-shrink:0;font-weight:500;font-size:10px;color:var(--text2)}
+.gantt-track{flex:1;height:16px;background:var(--bg4);border-radius:3px;position:relative;overflow:hidden}
+.gantt-bar{position:absolute;height:100%;border-radius:3px;display:flex;align-items:center;padding:0 5px}
+.gantt-bar span{font-size:9px;color:#fff;font-weight:600;white-space:nowrap}
+.gantt-today{position:absolute;top:0;bottom:0;width:1px;background:var(--lg-red);opacity:.7}
+
+/* ANNOT */
+.annot{font-size:9px;color:var(--text4);margin-top:5px;line-height:1.5}
+
+/* FOOTER */
+.footer{background:var(--bg2);border-top:1px solid var(--border);padding:6px 16px;display:flex;align-items:center;justify-content:space-between}
+.foot-l,.foot-r{font-size:9px;color:var(--text4)}
+.foot-r{display:flex;gap:10px}
+.foot-acc{color:var(--lg-red);font-weight:700}
+
+/* BUDGET DETAIL */
+.bud-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)}
+.bud-row:last-child{border-bottom:none}
+.bud-lbl{font-size:10px;font-weight:500;color:var(--text2);width:110px;flex-shrink:0}
+.bud-track{flex:1;height:10px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.bud-fill{height:100%;border-radius:3px}
+.bud-val{font-size:10px;font-weight:700;width:50px;text-align:right;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="lg-mark"><span>LG</span></div>
+  <div>
+    <div class="h-title">Mon Tableau de Bord — PJM</div>
+    <div class="h-sub">Chef de projet · Vue personnelle · Projets actifs &amp; alertes</div>
+  </div>
+  <div class="h-right">
+    <span class="badge badge-pv">Planview Project Advantage</span>
+    <span class="badge badge-live"><span class="dot"></span>Live</span>
+    <span class="sync">27 avr. 2026 — 08h15</span>
+  </div>
+</div>
+
+<!-- PERSONA BAR -->
+<div class="persona-bar">
+  <div class="pb-left">
+    <div class="pb-name">🎯 Marc Delacroix — PJM</div>
+    <div class="pb-role">Chef de projet · Centre R&D Limoges · Résidentiel Connecté &amp; Operations</div>
+  </div>
+  <div class="pb-right">
+    <span class="pb-tag">2 projets actifs</span>
+    <span class="pb-tag">1 Classe A · 1 Classe B</span>
+    <span class="pb-tag">3 alertes ouvertes</span>
+    <span class="pb-tag">4 risques à suivre</span>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- KPIs -->
+<div class="row r5">
+  <div class="kpi k-b">
+    <div class="kpi-lbl">Projets actifs</div>
+    <div class="kpi-val">2</div>
+    <div class="kpi-sub">1 OC Classe A · 1 NOC Classe B</div>
+  </div>
+  <div class="kpi k-y">
+    <div class="kpi-lbl">Prochain jalon</div>
+    <div class="kpi-val">J-8</div>
+    <div class="kpi-sub">Pré-V0 — LS990 Connected</div>
+    <div class="kpi-delta d-flat">⚠ RACI draft manquant</div>
+  </div>
+  <div class="kpi k-r">
+    <div class="kpi-lbl">Alertes ouvertes</div>
+    <div class="kpi-val">3</div>
+    <div class="kpi-sub">2 jalons · 1 budget</div>
+    <div class="kpi-delta d-dn">↑ +1 cette semaine</div>
+  </div>
+  <div class="kpi k-g">
+    <div class="kpi-lbl">Budget LG-OP-001</div>
+    <div class="kpi-val">5,2M</div>
+    <div class="kpi-sub">CAPEX 406k€ approuvé V2</div>
+    <div class="kpi-delta d-up">✓ Scénario Sc1 retenu</div>
+  </div>
+  <div class="kpi k-p">
+    <div class="kpi-lbl">Risques ouverts</div>
+    <div class="kpi-val">4</div>
+    <div class="kpi-sub">2 élevés · 2 moyens</div>
+    <div class="kpi-delta d-flat">1 plan de mitigation en attente</div>
+  </div>
+</div>
+
+<!-- PROJETS + JALONS -->
+<div class="row r3-2">
+  <div class="card">
+    <div class="card-title"><div class="ct" style="height:14px;background:var(--blue)"></div>Mes projets — Statut jalons &amp; budget</div>
+    <table class="tbl">
+      <thead><tr><th>Projet</th><th>Cat.</th><th>Cl.</th><th>Jalon actuel</th><th>Avancement</th><th>Budget init.</th><th>Forecast</th><th>Dérive</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><div class="pname">Manuf. Duplication China→India</div><div class="pmeta">LG-OP-001 · Operations · 3 SKUs Classe A · Dual manufacturing</div></td>
+          <td><span class="b b-noc">NOC</span></td>
+          <td><span class="b b-b">B</span></td>
+          <td style="color:var(--yellow);font-size:10px;font-weight:600">V2 → Août-25</td>
+          <td><div class="pb-w"><div class="pb-f" style="width:55%;background:var(--yellow)"></div></div><span style="font-size:9px;color:var(--text3);margin-left:4px">55%</span></td>
+          <td style="font-weight:600">5,2 M€</td>
+          <td style="color:var(--yellow);font-weight:600">5,2 M€</td>
+          <td><span class="b b-ok">✓ On track</span></td>
+        </tr>
+        <tr>
+          <td><div class="pname">Smart Switch LS990 Connected</div><div class="pmeta">LG-NP-001 · Offer Creation · Résidentiel · Centre Limoges</div></td>
+          <td><span class="b b-oc">OC</span></td>
+          <td><span class="b b-a">A</span></td>
+          <td style="color:var(--yellow);font-size:10px;font-weight:600">V2 → Mars-25 ⚠</td>
+          <td><div class="pb-w"><div class="pb-f" style="width:62%;background:var(--yellow)"></div></div><span style="font-size:9px;color:var(--text3);margin-left:4px">62%</span></td>
+          <td style="font-weight:600">3,2 M€</td>
+          <td style="color:var(--yellow);font-weight:600">3,5 M€</td>
+          <td><span class="b b-warn">+3 sem.</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="alert al-y">⚠ <strong>LG-NP-001 LS990</strong> — Alerte J-30 déclenchée : V2 à risque. Certification CE non bouclée. Risk Analysis QMS à finaliser avant le 15 mai. Dérive forecast +300k€ vs initial.</div>
+  </div>
+  <div class="card">
+    <div class="card-title"><div class="ct" style="height:14px;background:var(--lg-red)"></div>Alertes &amp; prochains jalons</div>
+    <div class="ms-item">
+      <div class="ms-date">30 Avr</div>
+      <div class="ms-info"><div class="ms-name">LG-NP-001 — Pré-V0 validation</div><div class="ms-proj">⚠ Manquants : RACI draft · One-pager partiel</div></div>
+      <span class="b b-warn">J-8</span>
+    </div>
+    <div class="ms-item">
+      <div class="ms-date">15 Mai</div>
+      <div class="ms-info"><div class="ms-name">LG-NP-001 — V2 Scénario validation</div><div class="ms-proj">Requis : Risk Analysis QMS · Budget V2 · Firm date V3</div></div>
+      <span class="b b-warn">J-23</span>
+    </div>
+    <div class="ms-item">
+      <div class="ms-date">Août-25</div>
+      <div class="ms-info"><div class="ms-name">LG-OP-001 — V2 Budget consolidation</div><div class="ms-proj">Sc1 Make China/Buy India · Molds 50k€ · RACI final</div></div>
+      <span class="b b-plan">Planifié</span>
+    </div>
+    <div class="ms-item">
+      <div class="ms-date">Sept-26</div>
+      <div class="ms-info"><div class="ms-name">LG-OP-001 — V3 Manufacturing Release</div><div class="ms-proj">India manufacturing · Qualification process STF029</div></div>
+      <span class="b b-plan">J-510</span>
+    </div>
+    <div class="ms-item">
+      <div class="ms-date">2027+</div>
+      <div class="ms-info"><div class="ms-name">LG-OP-001 — Vn Monitoring gains</div><div class="ms-proj">ROI 3 ans · CO2 80T · PRI Basis 100</div></div>
+      <span class="b b-plan">Optionnel</span>
+    </div>
+  </div>
+</div>
+
+<!-- GANTT + RISQUES + ACTIONS -->
+<div class="row r2-1-1">
+
+  <div class="card">
+    <div class="card-title"><div class="ct" style="height:14px;background:var(--lg-dark)"></div>Planning macro — LG-OP-001 Manuf. Duplication (V0→V3)</div>
+    <!-- Gantt simplifié -->
+    <div class="gantt-row">
+      <div class="gantt-lbl">Opportunity</div>
+      <div class="gantt-track">
+        <div class="gantt-bar" style="left:0%;width:5%;background:var(--text4)"><span>Opport.</span></div>
+      </div>
+    </div>
+    <div class="gantt-row">
+      <div class="gantt-lbl">V0 — Kick-off interne</div>
+      <div class="gantt-track">
+        <div class="gantt-bar" style="left:5%;width:6%;background:var(--green)"><span>V0 Nov-24</span></div>
+      </div>
+    </div>
+    <div class="gantt-row">
+      <div class="gantt-lbl">V1 — Scénarios Make vs Buy</div>
+      <div class="gantt-track">
+        <div class="gantt-bar" style="left:11%;width:22%;background:var(--blue)"><span>V1 Nov-24 → Mai-25</span></div>
+      </div>
+    </div>
+    <div class="gantt-row">
+      <div class="gantt-lbl">V2 — Validation scénario</div>
+      <div class="gantt-track">
+        <div class="gantt-bar" style="left:33%;width:12%;background:var(--yellow)"><span>V2 → Août-25</span></div>
+        <div class="gantt-today" style="left:38%"></div>
+      </div>
+    </div>
+    <div class="gantt-row">
+      <div class="gantt-lbl">V3 — Manufacturing Release</div>
+      <div class="gantt-track">
+        <div class="gantt-bar" style="left:45%;width:43%;background:var(--orange)"><span>V3 → Sept-26 (+21M)</span></div>
+      </div>
+    </div>
+    <div class="gantt-row">
+      <div class="gantt-lbl">Qualification produit (V3)</div>
+      <div class="gantt-track">
+        <div class="gantt-bar" style="left:75%;width:13%;background:var(--purple)"><span>STF029 · NPI review</span></div>
+      </div>
+    </div>
+    <div class="gantt-row">
+      <div class="gantt-lbl">Vn — Monitoring gains</div>
+      <div class="gantt-track">
+        <div class="gantt-bar" style="left:88%;width:12%;background:var(--text4)"><span>Vn</span></div>
+      </div>
+    </div>
+    <div class="annot">▲ Aujourd'hui (Avr-25) · Barre rouge = date courante · LG-OP-001 · Cycle NOC Operations flexible · BF.68 BF.70</div>
+
+    <div style="margin-top:10px">
+      <div class="card-title" style="margin-bottom:6px"><div class="ct" style="height:14px;background:var(--blue)"></div>Tâches clés V2 à compléter</div>
+      <div class="chk">
+        <span class="chk-i">🔴</span><div class="chk-t">Validation scénario Sc1 Make China/Buy India avec PLO Sophie</div><div class="chk-d">Avant V2</div>
+      </div>
+      <div class="chk">
+        <span class="chk-i">🔴</span><div class="chk-t">Budget consolidé V2 : Molds 50k€ · ICT 30k€ · EOL 70k€</div><div class="chk-d">Avant V2</div>
+      </div>
+      <div class="chk">
+        <span class="chk-i">🟡</span><div class="chk-t">RACI consolidé final (R&D China, India, Achats, Qualité, SC)</div><div class="chk-d">V2</div>
+      </div>
+      <div class="chk">
+        <span class="chk-i">🟡</span><div class="chk-t">Planning Gantt V2→V3 détaillé (Qualification · NPI · Manuf.)</div><div class="chk-d">V2</div>
+      </div>
+      <div class="chk">
+        <span class="chk-i">🟡</span><div class="chk-t">Risk Analysis audit fournisseur Inde (plan mitigation R1)</div><div class="chk-d">V2</div>
+      </div>
+      <div class="chk">
+        <span class="chk-i">🟢</span><div class="chk-t">Codes locaux CN-xxx + IN-xxx créés (Resp. R&D confirmés)</div><div class="chk-d">✓ Fait</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><div class="ct" style="height:14px;background:var(--red)"></div>Registre des risques — LG-OP-001</div>
+    <div class="risk-item">
+      <span class="rl rl-h">ÉLEVÉ</span>
+      <div style="flex:1"><div class="rname">Audit fournisseur Inde non concluant</div><div class="rproj">Plan B : Sc2 Buy India · Lié à jalon V2 · Impact délai V3</div></div>
+      <div class="rown">R1<br>En cours</div>
+    </div>
+    <div class="risk-item">
+      <span class="rl rl-h">ÉLEVÉ</span>
+      <div style="flex:1"><div class="rname">Délai certification qualité STF029</div><div class="rproj">Matrice qualification R&D India · 6M audit requis</div></div>
+      <div class="rown">R2<br>À surveiller</div>
+    </div>
+    <div class="risk-item">
+      <span class="rl rl-m">MOYEN</span>
+      <div style="flex:1"><div class="rname">Dépendance Chine supply risk</div><div class="rproj">Dual sourcing China + India objectif V3</div></div>
+      <div class="rown">R3<br>En cours</div>
+    </div>
+    <div class="risk-item">
+      <span class="rl rl-m">MOYEN</span>
+      <div style="flex:1"><div class="rname">Dérive CAPEX &gt; 406k€ (Sc1)</div><div class="rproj">Budget verrouillé post-approbation V2</div></div>
+      <div class="rown">R4<br>Maîtrisé</div>
+    </div>
+    <div class="alert al-y" style="margin-top:8px">⚠ R1 escalade possible si audit Inde non concluant J-30 avant V2 → passage en Project Review (PR bimensuel Classe B)</div>
+
+    <div style="margin-top:12px">
+      <div class="card-title" style="margin-bottom:6px"><div class="ct" style="height:14px;background:var(--red)"></div>Risques — LG-NP-001 LS990</div>
+      <div class="risk-item">
+        <span class="rl rl-h">ÉLEVÉ</span>
+        <div style="flex:1"><div class="rname">Retard certification CE Classe II</div><div class="rproj">LS990 · V2 risque ±3 sem. · PR requis</div></div>
+        <div class="rown">Actif</div>
+      </div>
+      <div class="risk-item">
+        <span class="rl rl-m">MOYEN</span>
+        <div style="flex:1"><div class="rname">Surcharge compétence Électronique</div><div class="rproj">Centre Limoges 118% · DPX³ simultané</div></div>
+        <div class="rown">PMO notifié</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div class="card">
+      <div class="card-title"><div class="ct" style="height:14px;background:var(--green)"></div>Budget LG-OP-001 — 4 éléments</div>
+      <div class="bud-row">
+        <div class="bud-lbl">Budget Initial</div>
+        <div class="bud-track"><div class="bud-fill" style="width:100%;background:var(--blue)"></div></div>
+        <div class="bud-val" style="color:var(--blue)">5,2 M€</div>
+      </div>
+      <div class="bud-row">
+        <div class="bud-lbl">Réalisé (Actual)</div>
+        <div class="bud-track"><div class="bud-fill" style="width:28%;background:var(--green)"></div></div>
+        <div class="bud-val" style="color:var(--green)">~1,4 M€</div>
+      </div>
+      <div class="bud-row">
+        <div class="bud-lbl">Forecast (V2)</div>
+        <div class="bud-track"><div class="bud-fill" style="width:100%;background:var(--yellow)"></div></div>
+        <div class="bud-val" style="color:var(--yellow)">5,2 M€</div>
+      </div>
+      <div class="bud-row">
+        <div class="bud-lbl">Final Actual</div>
+        <div class="bud-track"><div class="bud-fill" style="width:0%;background:var(--text4)"></div></div>
+        <div class="bud-val" style="color:var(--text4)">À V3</div>
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:var(--text3);line-height:1.6">
+        <strong>Postes V2 consolidés :</strong><br>
+        Moules : 50k€ · ICT test : 30k€<br>
+        EOL test : 70k€ · CAPEX éq. : 131k€<br>
+        CAPEX outillage : 275k€
+      </div>
+      <div class="alert al-g">✓ CAPEX total Sc1 : 406k€ approuvé · ROI 3 ans · CO2 80T (−17T vs Sc initial)</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="ct" style="height:14px;background:var(--yellow)"></div>4 Scénarios Make vs Buy</div>
+      <div class="sc-row">
+        <span class="sc-ic">✅</span>
+        <span class="sc-name"><strong>Sc1</strong> Make CN / Buy IN</span>
+        <span class="sc-val">4,30 M€</span>
+        <span class="sc-roi">3 ans</span>
+        <span class="sc-co2">97T</span>
+      </div>
+      <div class="sc-row">
+        <span class="sc-ic">—</span>
+        <span class="sc-name">Sc2 Buy India</span>
+        <span class="sc-val">4,59 M€</span>
+        <span class="sc-roi">3Y 9M</span>
+        <span class="sc-co2">80T</span>
+      </div>
+      <div class="sc-row">
+        <span class="sc-ic">—</span>
+        <span class="sc-name">Sc3 Make CN + IN sup.</span>
+        <span class="sc-val">4,45 M€</span>
+        <span class="sc-roi">3Y 6M</span>
+        <span class="sc-co2">88T</span>
+      </div>
+      <div class="sc-row">
+        <span class="sc-ic">—</span>
+        <span class="sc-name">Sc4 Make+Buy Europe</span>
+        <span class="sc-val">5,26 M€</span>
+        <span class="sc-roi">&gt;6 ans</span>
+        <span class="sc-co2">45T</span>
+      </div>
+      <div class="annot">Col. 3 = PRI total Full project · Col. 4 = ROI · Col. 5 = CO2 émissions</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="ct" style="height:14px;background:var(--purple)"></div>Mes actions prioritaires</div>
+      <div class="chk"><span class="chk-i">🔴</span><div class="chk-t">RACI draft LG-NP-001</div><div class="chk-d">30/04</div></div>
+      <div class="chk"><span class="chk-i">🔴</span><div class="chk-t">Risk Analysis QMS V2 LS990</div><div class="chk-d">15/05</div></div>
+      <div class="chk"><span class="chk-i">🟡</span><div class="chk-t">Validation Sc1 avec PLO</div><div class="chk-d">Août</div></div>
+      <div class="chk"><span class="chk-i">🟡</span><div class="chk-t">Budget V2 consolidé LG-OP-001</div><div class="chk-d">Août</div></div>
+      <div class="chk"><span class="chk-i">🟢</span><div class="chk-t">Codes locaux CN + IN créés</div><div class="chk-d">✓</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- BUDGET CHARTS -->
+<div class="row r2">
+  <div class="card">
+    <div class="card-title"><div class="ct" style="height:14px;background:var(--yellow)"></div>LG-OP-001 — Budget par poste de coûts (Initial / Actual / Forecast)</div>
+    <div class="ch-md"><canvas id="cBudgetPosts"></canvas></div>
+    <div class="annot">BF.31 BF.33 — 4 postes de coûts distincts · Vue projet consolidée · Multidevises CNY + INR → EUR</div>
+  </div>
+  <div class="card">
+    <div class="card-title"><div class="ct" style="height:14px;background:var(--blue)"></div>LG-NP-001 — Budget LS990 par poste (M€)</div>
+    <div class="ch-md"><canvas id="cBudgetLS990"></canvas></div>
+    <div class="annot">Forecast +300k€ vs initial · Dérive sur FTE R&D et frais projet · BF.31 BF.38</div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<div class="footer">
+  <div class="foot-l">Legrand Group · PJM Marc Delacroix · <span class="foot-acc">Planview Project Advantage</span> · BF.56 BF.63 BF.90 · Power BI HTML Content</div>
+  <div class="foot-r"><span>2 projets actifs</span><span>Centre Limoges</span><span>27/04/2026</span></div>
+</div>
+
+<script>
+Chart.defaults.font.family="'Segoe UI',system-ui,sans-serif";
+Chart.defaults.font.size=9;
+Chart.defaults.color='#5A607A';
+const tc={color:'#5A607A',font:{size:9}};
+const lc={labels:{color:'#374151',font:{size:9},boxWidth:10,padding:8}};
+const gX={grid:{color:'rgba(0,0,0,.04)'},ticks:tc};
+const gY={grid:{color:'rgba(0,0,0,.04)'},ticks:tc};
+
+new Chart(document.getElementById('cBudgetPosts'),{type:'bar',
+  data:{labels:['FTE R&D','Ressources ext.','Frais projet','CAPEX'],
+    datasets:[
+      {label:'Initial',data:[2.2,0.8,0.3,1.9],backgroundColor:'rgba(18,85,204,.15)',borderColor:'#1255CC',borderWidth:1.5,borderRadius:3},
+      {label:'Actual',data:[0.7,0.3,0.1,0.3],backgroundColor:'rgba(14,138,74,.2)',borderColor:'#0E8A4A',borderWidth:1.5,borderRadius:3},
+      {label:'Forecast',data:[2.2,0.8,0.3,1.9],backgroundColor:'rgba(212,136,0,.15)',borderColor:'#D48800',borderWidth:1.5,borderRadius:3}
+    ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:lc,tooltip:{bodyFont:{size:10},callbacks:{label:c=>` ${c.dataset.label}: ${c.raw}M€`}}},
+    scales:{x:{...gX,ticks:{...tc,font:{size:8}}},y:{...gY,ticks:{...tc,callback:v=>v+'M€'}}}}
+});
+
+new Chart(document.getElementById('cBudgetLS990'),{type:'bar',
+  data:{labels:['FTE R&D','Ressources ext.','Frais projet','CAPEX'],
+    datasets:[
+      {label:'Initial',data:[1.2,0.5,0.2,1.3],backgroundColor:'rgba(18,85,204,.15)',borderColor:'#1255CC',borderWidth:1.5,borderRadius:3},
+      {label:'Actual',data:[0.5,0.2,0.1,0.4],backgroundColor:'rgba(14,138,74,.2)',borderColor:'#0E8A4A',borderWidth:1.5,borderRadius:3},
+      {label:'Forecast',data:[1.4,0.6,0.3,1.2],backgroundColor:'rgba(201,32,46,.15)',borderColor:'#C9202E',borderWidth:1.5,borderRadius:3}
+    ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:lc,tooltip:{bodyFont:{size:10},callbacks:{label:c=>` ${c.dataset.label}: ${c.raw}M€`}}},
+    scales:{x:{...gX,ticks:{...tc,font:{size:8}}},y:{...gY,ticks:{...tc,callback:v=>v+'M€'}}}}
+});
+</script>
+</body>
+</html>
